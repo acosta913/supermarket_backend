@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  CAJERO
+  INVENTARIO
+}
+
+enum MovementType {
+  IN
+  OUT
+}
+
+enum MovementReason {
+  SALE
+  RESTOCK
+  ADJUSTMENT
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role
+  createdAt DateTime @default(now())
+
+  sales     Sale[]
+}
+
+model Product {
+  id             String   @id @default(uuid())
+  name           String
+  description    String?
+  sku            String   @unique
+  purchasePrice  Float
+  salePrice      Float
+  unitType       String
+  createdAt      DateTime @default(now())
+
+  inventory      Inventory?
+  saleItems      SaleItem[]
+  movements      InventoryMovement[]
+}
+
+model Inventory {
+  id        String   @id @default(uuid())
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String   @unique
+  stock     Float
+  updatedAt DateTime @updatedAt
+}
+
+model InventoryMovement {
+  id        String          @id @default(uuid())
+  product   Product         @relation(fields: [productId], references: [id])
+  productId String
+  type      MovementType
+  reason    MovementReason
+  quantity  Float
+  createdAt DateTime        @default(now())
+}
+
+model Sale {
+  id        String     @id @default(uuid())
+  user      User       @relation(fields: [userId], references: [id])
+  userId    String
+  total     Float
+  createdAt DateTime   @default(now())
+
+  items     SaleItem[]
+}
+
+model SaleItem {
+  id        String   @id @default(uuid())
+  sale      Sale     @relation(fields: [saleId], references: [id])
+  saleId    String
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  quantity  Float
+  price     Float
+  subtotal  Float
+}
+
+model AccountingEntry {
+  id          String   @id @default(uuid())
+  type        String
+  amount      Float
+  description String?
+  createdAt   DateTime @default(now())
+}
