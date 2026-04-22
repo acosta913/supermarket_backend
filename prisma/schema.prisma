@@ -7,12 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  ADMIN
-  CAJERO
-  INVENTARIO
-}
-
 enum MovementType {
   IN
   OUT
@@ -25,14 +19,40 @@ enum MovementReason {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      Role
-  createdAt DateTime @default(now())
+  id          String        @id @default(uuid())
+  name        String
+  email       String        @unique
+  password    String
+  roleId      String
+  role        Role          @relation(fields: [roleId], references: [id])
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
-  sales     Sale[]
+  sales       Sale[]
+  sessions    UserSession[]
+}
+
+model Role {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  users     User[]
+  createdAt DateTime @default(now())
+}
+
+model UserSession {
+  id               String    @id @default(uuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokenHash String
+  userAgent        String?
+  ipAddress        String?
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  createdAt        DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model Product {
